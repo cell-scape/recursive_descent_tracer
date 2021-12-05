@@ -14,30 +14,75 @@ def parser(tokens: list, statements=StmtList([])):
     """
     Parse the token stream
     """
-    
-    token, tokens = c.first(tokens), c.rest(tokens)
-    if token['type'] == "ID":
-        if
-        statements.list.append(assign_stmt(tokens))
+    head, tail = c.first(tokens), c.rest(tokens)
+    if head['type'] == "ID":
+        peek = c.first(tail)
+        if peek['type'] == "EQ":
+            expr_tokens, semicolon, tokens_left = advance_statement(c.rest(tail))
+            assign_node = AssignStmt(id=head, eq=peek, semicolon=semicolon)
+            if not semicolon:
+                statements.list.append("Syntax Error")
+                return statements
+            assign_node.expr = expr(expr_tokens)
+            statements.list.append(assign_node)
+            return parser(tokens_left, statements)
+        statements.list.append("Syntax Error")
+        return statements
 
-    if token['type'] == "RESERVED":
-        if token['lexeme'] == "print":
-            statements.list.append(print_stmt(tokens))            
+    if head['type'] == "RESERVED":
+        if head['lexeme'] == "print":
+            expr_tokens, semicolon, tokens_left = advance_statement(tail)
+            print_node = PrintStmt(prnt=head, semicolon=semicolon)
+            if not semicolon:
+                statements.list.append("Syntax Error")
+                return statements
+            print_node.expr = expr(expr_tokens)
+            statements.list.append(print_node)
+            return parser(tokens_left, statements)
+        statements.list.append("Syntax Error")
+        return statements
+    return statements
 
 
-
-
-def statement(tokens: t.list[Token], state: dict) -> tuple:
+def advance_statement(tokens: list) -> tuple:
     """
-    Evaluate a statement, return value and state
-    Assignments will return the assigned value
-    """
-    if tokens[0]['type'] == "ID":
-        return assignment(tokens, state)
-    if tokens[0]['type'] == "RESERVED":
-        return builtin(tokens, state)
-    else:
+    Advance to the next semicolon, return expr list, semicolon token, and tail
+    """    
+    expr = []
+    semicolon = None
+    for token in tokens:
+        if token['type'] == "SEMICOLON":
+            semicolon = token
+            break
+        expr.append(token)
+    return expr, semicolon, tokens[len(expr)+1:]
 
+
+def expr(tokens: list, expr: Expr()):
+    """
+    Get expr ast node
+    """
+    head, peek, tail = c.first(tokens), c.next(tokens) c.rest(tokens)
+    if head['type'] == "ID":
+        term_node, _ = term([head])
+    if head['type'] == "INTNUM":
+        term_node, _ = term([head])
+        if peek['type'] in ("PLUS", "MINUS"):
+            ExprBinOp()
+        if peek['type'] in ("MUL", "DIV"):
+            
+    if head['type'] in ("PLUS", "MINUS"):
+        ExprUnaryOp()
+    if head['type'] == "MINUS":
+        
+    if head['type'] == "LPAREN":
+
+    if head['type'] == "RPAREN":
+
+    if head['type'] = "SEMICOLON":
+        
+
+def term(tokens: list, ): 
 
 
 def stmt(tokens):
