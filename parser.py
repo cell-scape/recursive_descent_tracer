@@ -7,7 +7,7 @@ import common as c
 import lexer as lx
 
 
-def parser(tokens: tuple):
+def parse(tokens: tuple):
     """
     Parse the token stream
     """

@@ -8,10 +8,14 @@ from string import ascii_letters, digits, whitespace
 ALPHABET = ascii_letters + digits + whitespace + "_-=+*/();"
 
 
-def argparser(name: str):
-    ap = argparse.ArgumentParser(prog=name, epilog="---")
-    ap.add_argument("filename",
+def argparser(desc: str):
+    ap = argparse.ArgumentParser(prog=__name__, description=desc, epilog="---")
+    ap.add_argument("-f, --file",
                     type=str,
+                    default="",
+                    required=False,
+                    metavar="FILE",
+                    nargs="*",
                     help="Tiny language file(s) to process")
     return ap
 

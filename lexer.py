@@ -29,54 +29,73 @@ TOKEN_TYPES = {
     ")": "RPAREN",
     "=": "ASSIGN",
     ";": "SEMICOLON",
+    "EOF": "EOF",
 }
 
 
-def lexer(program: tuple) -> tuple:
+def lexer(program: list) -> list:
     """
     Return a stream of tokens
     """
-    token_stream = []
-    for line in program:
-        token_stream.append(lex(line))
-    return tuple(chain.from_iterable(token_stream))
+    tokens = []
+    for i, line in enumerate(program):
+        tokens.append(lex(line, i))
+    tokens.append(_tokenize("EOF", TOKEN_TYPES["EOF"], -1, -1))
+    return list(chain.from_iterable(tokens))
 
 
-def lex(line: str) -> dict:
+def lex(line: str, line_number: int) -> dict:
     """
-    Get from a line
+    Get tokens from a line
     """
     tokens = []
     token = []
-    for char in line:
+    start = 0
+    for i, char in enumerate(line):
         if not token and char in whitespace:
             continue
         if token and char in whitespace:
-            tokens.append(tokenize("".join(token)))
+            tokens.append(tokenize("".join(token), 
+                                    line_number, start))
             token = []
             continue
         if char in "".join(OPERATORS + DELIMITERS):
-            tokens.append(tokenize("".join(token)))
-            tokens.append(tokenize(char))
+            tokens.append(tokenize("".join(token),
+                                    line_number, start))
+            tokens.append(tokenize(char, line_number, i))
             token = []
             continue
+        start = i
         token.append(char)
     return list(filter(lambda t: t, tokens))
 
 
-def tokenize(token: str) -> dict:
+def tokenize(lexeme: str, line: int, pos: int) -> dict:
     """
-    Return token objects for each token
+    Return token objects for each lexeme
     """
-    if token:
-        if is_reserved(token):
-            return {TOKEN_TYPES['reserved']: token}
-        if token.isdigit():
-            return {TOKEN_TYPES['intnum']: int(token)}
-        if ID_REGEX.match(token) and not is_reserved(token):
-            return {TOKEN_TYPES['id']: token}
-        return {TOKEN_TYPES[token]: token}
-    return None
+    if lexeme:
+        if is_reserved(lexeme):
+            return _tokenize(lexeme, TOKEN_TYPES['reserved'], line, pos)
+        if lexeme.isdigit():
+            return _tokenize(int(lexeme), TOKEN_TYPES['intnum'], line, pos)
+        if ID_REGEX.match(lexeme) and not is_reserved(lexeme):
+            return _tokenize(lexeme, TOKEN_TYPES['id'], line, pos)
+        return _tokenize(lexeme, TOKEN_TYPES[lexeme] line, pos)
+    return {}
+
+
+def _tokenize(lexeme: str, ttype: str, line: int, pos: int) -> dict:
+    """
+    Return token dictionary
+    """
+    return {
+        'type': ttype,
+        'lexeme': str(lexeme),
+        'literal': lexeme,
+        'line': line,
+        'position': pos
+    }
 
 
 def is_reserved(token: str) -> bool:
@@ -101,7 +120,7 @@ def get_indices(item, seq, idxs=[]) -> list:
     return idxs
 
 
-def illegal_chars_in_program(program: tuple) -> tuple:
+def illegal_chars_in_program(program: list) -> list:
     """
     Report syntax errors at line and position
     """
