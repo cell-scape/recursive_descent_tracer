@@ -29,17 +29,34 @@ TOKEN_TYPES = {
 }
 
 
+class Token:
+    def __init__(self, token={'ttype': "", "lex": "", "loc": (-1, -1, -1)}):
+        self.type = token['ttype']
+        self.lexeme = token['lex']
+        self.line = token['loc'][0]
+        self.pos= token['loc'][1]
+        self.index = token['loc'][2]
+        if self.type == "NUMBER":
+            self.literal = int(self.lexeme)
+        else:
+            self.literal = str(self.lexeme)
+        
+    def __repr__(self):
+        return "".join([f"({self.line}, {self.pos}, {self.index}) -",
+                f"{self.type} Token: {self.lexeme}"])
+
+
 class Lexer:
     def __init__(self, program: list):
         self.program = program
-        self.program_tokens = []
-        self.flat_tokens = []
-
+        self.lex()
+    
     def __repr__(self):
-        return f"Lexer: {self.program}"
+        return f"Lexer: {self.program_tokens}"
 
     def lex(self):
         program_tokens = []
+        k = 0
         for i, stmt in enumerate(self.program):
             tokens = []    
             if not ID.match(stmt[0]):
@@ -50,7 +67,7 @@ class Lexer:
                 print(f"Syntax error on line {i}: 'print' is a reserved word and cannot be used for assignment")
             if stmt[-1] != ";" and not stmt[-1].endswith(";"):
                 print(f"Syntax error on line {i}: statement must end with semicolon")
-            for lexeme in stmt:
+            for j, lexeme in enumerate(stmt):
                 token = {"lexeme": lexeme}
                 if lexeme == "print":
                     token["type"] = TOKEN_TYPES[lexeme]
@@ -58,10 +75,11 @@ class Lexer:
                     token["type"] = TOKEN_TYPES["id"]
                 elif lexeme.isdigit():
                     token["type"] = TOKEN_TYPES["int"]
-                    token["literal"] = int(lexeme)
                 else:
                     token["type"] = TOKEN_TYPES[lexeme]
-                tokens.append(token)
+                token["loc"] = (i, j, k)
+                tokens.append(Token(token))
+                k += 1
             program_tokens.append(tokens)
         self.program_tokens = program_tokens
     
@@ -79,6 +97,8 @@ class Lexer:
             self.lex()
         self.flat_tokens = chain.from_iterable(self.program_tokens)
     
+
+
 
 class StmtList:
     def __init__(self, program_tokens: list):
@@ -119,14 +139,7 @@ class Stmt:
             self.value = None
 
 
-class Expr:
-    def __init__(self, tokens: list):
-        self.tokens
-
-    def __repr__(self):
-        return f"{self.tokens}"
-
-class Assign(Expr):
+class Assign(Stmt):
     def __init__(self, var: str, **kwds):
         self.var = var
         self.value = None
@@ -137,12 +150,41 @@ class Assign(Expr):
             return f"{self.var} = {self.value}"
         return f"{self.var} = {self.tokens}"
 
-class Print(Expr):
+
+class Print(Stmt):
     def __init__(self, **kwds):
         self.value = None
         super().__init__(**kwds)
 
-    
+    def __repr__(self):
+        if self.value:
+            return f"{self.tokens} = {self.value}"
+        return f"{self.tokens}"
+
+
+class Expr:
+    def __init__(self, tokens: list):
+        self.tokens = tokens
+
+    def __repr__(self):
+        return f"{self.tokens}"
+
+
+class BinaryExpr(Expr):
+    def __init__(self, left: Expr, op: Token, right: Expr):
+        self.left = left
+        self.op = op
+        self.right = right
+
+    def __repr__(self):
+        return f"{self.left} {self.op} {self.right}"
+
+class Term:
+    def __init__(self, tokens: list):
+        self.tokens = tokens
+
+
+
 
 class Parser:
     def __init__(self, program: list):
