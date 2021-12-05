@@ -15,6 +15,8 @@ DELIMITERS = "();"
 
 RESERVED_WORDS = {
     "print",
+    "exit",
+    "quit"
 }
 
 TOKEN_TYPES = {
@@ -168,6 +170,9 @@ def main(filename: str) -> int:
 
 if __name__ == "__main__":
     args = c.argparser("Tiny Language Lexer").parse_args()
-    if c.file_exists(args.filename):
-        sys.exit(main(args.filename))
-    sys.exit(-1)
+    for f in args.files:
+        if not c.file_exists(f):
+            sys.exit(-1)
+        rc = main(f)
+    sys.exit(rc)
+

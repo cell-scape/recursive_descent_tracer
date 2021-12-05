@@ -10,12 +10,13 @@ ALPHABET = ascii_letters + digits + whitespace + "_-=+*/();"
 
 def argparser(desc: str):
     ap = argparse.ArgumentParser(prog=__name__, description=desc, epilog="---")
-    ap.add_argument("-f, --file",
+    ap.add_argument("-f, --files",
                     type=str,
                     default="",
+                    dest="files",
                     required=False,
                     metavar="FILE",
-                    nargs="*",
+                    nargs="+",
                     help="Tiny language file(s) to process")
     return ap
 

@@ -1,10 +1,14 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import typing as t
 import sys
 
 import common as c
 import lexer as lx
+
+
+NODE = t.Dict
 
 
 def parse(tokens: tuple):

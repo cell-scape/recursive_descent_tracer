@@ -15,11 +15,15 @@ def evaluate(ir, state={}):
     pass
 
 
-def read(stmt: str) -> dict:
+def read(stmt: str, n=0) -> list:
     """
     Lex and parse a statement into IR for evaluation
     """
-    tokens = l.lexer(stmt)
+    if not c.stmt_legal(stmt):
+        _ = l.report_lexical_errors(l.lexical_errors(stmt))
+        return []
+    tokens =  l.lex(stmt, n)
+
 
 
 def repl(program=[]) -> tuple:
@@ -30,7 +34,6 @@ def repl(program=[]) -> tuple:
     if program:
         for line in program:
             output, state = evaluate(read(program), state)
-        for 
             try:
                 output.append((f"{evaluate(read(stmt))}"))
             except Exception as e:
@@ -42,17 +45,18 @@ def repl(program=[]) -> tuple:
     print(f"{pgm}\n{'-'*len(pgm)}\n")
     
     output = ""
-    
+    n = 0
     while True:
         try:
             stmt = input(">>> ")
             if stmt:
-                ir = read(stmt)                
+                ir = read(stmt, n)                
                 output, state = evaluate(ir, state)
                 print(output)
             break
         except Exception as e:
             return f"Exception: {e}", 1
+    n += 1
     return output, 0
 
 
