@@ -62,10 +62,16 @@ def illegal_chars(stmt: str) -> tuple:
     return set(filter(lambda char: not char_legal(char), stmt))
 
 
-def first(lst: list) -> list:
+def first(lst: list):
     if len(lst) < 2:
         return lst
     return lst[0]
+
+
+def next(lst: list):
+    if len(lst) < 2:
+        return []
+    return lst[1]
 
 
 def rest(lst: list) -> list:

@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import typing as t
 import sys
 
 import common as c
@@ -11,14 +10,19 @@ from tokens import *
 
 
 
-def parser(tokens: t.list[Token], stmt_list=StmtList([])):
+def parser(tokens: list, statements=StmtList([])):
     """
     Parse the token stream
     """
-    if tokens:
-        token, tokens = tokens[0], tokens[1:]
+    
+    token, tokens = c.first(tokens), c.rest(tokens)
     if token['type'] == "ID":
-        pass
+        if
+        statements.list.append(assign_stmt(tokens))
+
+    if token['type'] == "RESERVED":
+        if token['lexeme'] == "print":
+            statements.list.append(print_stmt(tokens))            
 
 
 

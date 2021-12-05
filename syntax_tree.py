@@ -30,10 +30,10 @@ class Stmt:
 
 class StmtList:
     def __init__(self, stmt_list=[]):
-        self.statements = stmt_list
+        self.list = stmt_list
 
     def __repr__(self):
-        return f"{self.stmt_list}"
+        return f"{self.list}"
 
 class Var(Factor):
     def __init__(self, name=None, value=None):
