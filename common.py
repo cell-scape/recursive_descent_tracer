@@ -37,25 +37,25 @@ def program_legal(program: tuple) -> bool:
     """
     check if all chars in program are legal
     """
-    return all(map(lambda l: string_legal(l), program))
+    return all(map(lambda stmt: stmt_legal(stmt), program))
 
 
-def string_legal(s: str) -> bool:
+def stmt_legal(stmt: str) -> bool:
     """
-    Check if all chars in string are legal
+    Check if all chars in statement are legal
     """
-    return all(map(lambda c: char_legal(c), s))
+    return all(map(lambda char: char_legal(char), stmt))
 
 
-def char_legal(c: str) -> bool:
+def char_legal(char: str) -> bool:
     """
     Check if char is in alphabet
     """
-    return c in ALPHABET
+    return char in ALPHABET
 
 
-def illegal_chars_in_string(s: str) -> tuple:
+def illegal_chars(stmt: str) -> tuple:
     """
-    Return illegal chars in a string
+    Return illegal chars in a stmt
     """
-    return set(filter(lambda c: not char_legal(c), s))
+    return set(filter(lambda char: not char_legal(char), stmt))
