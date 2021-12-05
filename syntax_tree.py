@@ -2,17 +2,24 @@ from tokens import *
 
 
 class Factor:
-    pass
+    def __init__(self):
+        pass
 
 
 class Term:
     def __init__(self, factor=None):
-        self.left = factor
+        self.factor = factor
+
+    def __repr__(self):
+        return f"Term: {self.factor}"
 
 
 class Expr:
     def __init__(self, term=None):
-        self.left = term
+        self.term = term
+
+    def __repr__(self):
+        return f"Expr: {self.term}"
 
 
 class Stmt:
@@ -25,16 +32,24 @@ class StmtList:
     def __init__(self, stmt_list=[]):
         self.statements = stmt_list
 
+    def __repr__(self):
+        return f"{self.stmt_list}"
 
 class Var(Factor):
     def __init__(self, name=None, value=None):
         self.id = name
         self.value = value
 
+    def __repr__(self):
+        return self.value
+
 
 class IntNum(Factor):
     def __init__(self, value=None):
         self.value = value
+
+    def __repr__(self):
+        return self.value
 
 
 class Grouping(Factor):
@@ -43,13 +58,19 @@ class Grouping(Factor):
         self.expr = expr
         self.rparen = rparen
 
+    def __repr__(self):
+        return f"({self.expr})"
+
 
 class TermOp(Term):
     def __init__(self, left=None, op=None, right=None):
         self.left = left
         self.op = op
         self.right = right
-        
+
+    def __repr__(self):
+        return f"{self.left} {self.op} {self.right}"
+
 
 class ExprBinOp(Expr):
     def __init__(self, left=None, op=None, right=None):
@@ -57,11 +78,17 @@ class ExprBinOp(Expr):
         self.op = op
         self.right = right
 
+    def __repr__(self):
+        return f"{self.left} {self.op} {self.right}"
+
 
 class ExprUnaryOp(Expr):
     def __init__(self, op=None, operand=None):
         self.op = op
         self.operand = operand
+
+    def __repr__(self):
+        return f"{self.op}{self.operand}"
 
 
 class AssignStmt(Stmt):
@@ -69,6 +96,9 @@ class AssignStmt(Stmt):
         self.id = id
         self.eq = eq
         super().__init__(**kwds)
+    
+    def __repr__(self):
+        return f"{self.id} = {self.expr};"
 
 
 class PrintStmt(Stmt):
@@ -76,5 +106,5 @@ class PrintStmt(Stmt):
         self.print = prnt
         super().__init__(**kwds)
 
-
-
+    def __repr__(self):
+        return f"print {self.expr};"
