@@ -23,8 +23,11 @@ def read(program: list, n=0):
         if not c.stmt_legal(stmt):
             errors = l.lexical_errors(stmt)
             raise Exception(errors)
-    tokens =  l.lex(stmt, n)
 
+    tokens =  l.lexer(program, n)
+    ast = p.parser(tokens)
+    
+    
 
 
 def repl(program=[]) tuple:

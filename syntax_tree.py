@@ -1,56 +1,80 @@
-#! /usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-import sys
-import typing as t
-
-import common as c
-import lexer as l
+from tokens import *
 
 
-Token = t.Dict['type': str, 'lexeme': str, 'literal': t.Union[str, int], 'line': int]
-Factor = t.Union[int, str, t.list[Token]]
-Term = t.Union[Factor, t.list[Token]]
-StmtList = list
-Statement = dict
-Expr = dict
-Term = t.Union
+class Factor:
+    pass
 
 
-def stmt_list(statements: list, state={}) -> int:
-    """
-    Evaluate a statement list
-    """
-    while statements:
+class Term:
+    def __init__(self, factor=None):
+        self.left = factor
+
+
+class Expr:
+    def __init__(self, term=None):
+        self.left = term
+
+
+class Stmt:
+    def __init__(self, expr=None, semicolon=None):
+        self.expr = expr
+        self.semicolon = semicolon
+
+
+class StmtList:
+    def __init__(self, stmt_list=[]):
+        self.statements = stmt_list
+
+
+class Var(Factor):
+    def __init__(self, name=None, value=None):
+        self.id = name
+        self.value = value
+
+
+class IntNum(Factor):
+    def __init__(self, value=None):
+        self.value = value
+
+
+class Grouping(Factor):
+    def __init__(self, lparen=None, expr=None, rparen=None):
+        self.lparen = lparen
+        self.expr = expr
+        self.rparen = rparen
+
+
+class TermOp(Term):
+    def __init__(self, left=None, op=None, right=None):
+        self.left = left
+        self.op = op
+        self.right = right
         
 
-
-def statement(tokens: t.list[Token], state: dict) -> tuple:
-    """
-    Evaluate a statement, return value and state
-    Assignments will return the assigned value
-    """
-    if tokens[0]['type'] == "ID":
-        return assignment(tokens, state)
-    if tokens[0]['type'] == "RESERVED":
-        return builtin(tokens, state)
-    else:
+class ExprBinOp(Expr):
+    def __init__(self, left=None, op=None, right=None):
+        self.left = left
+        self.op = op
+        self.right = right
 
 
-def main(filename: str) -> int:
-    """
-    Test abstract syntax tree when run as a script
-    """
-    program = c.load_program(filename)
-    tokens = l.lexer(program)
-
-    return 0
+class ExprUnaryOp(Expr):
+    def __init__(self, op=None, operand=None):
+        self.op = op
+        self.operand = operand
 
 
-if __name__ == "__main__":
-    args = c.argparser("Abstract Syntax Tree").parse_args()
-    for f in args.files:
-        if not c.file_exists(f):
-            sys.exit(-1)
-        rc = main(f)
-    sys.exit(rc)
+class AssignStmt(Stmt):
+    def __init__(self, id=None, eq=None, **kwds):
+        self.id = id
+        self.eq = eq
+        super().__init__(**kwds)
+
+
+class PrintStmt(Stmt):
+    def __init__(self, prnt=None, **kwds):
+        self.print = prnt
+        super().__init__(**kwds)
+
+
+

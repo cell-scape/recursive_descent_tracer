@@ -7,6 +7,7 @@ from string import whitespace
 import sys
 
 import common as c
+from tokens import *
 
 
 ID_REGEX = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
@@ -42,7 +43,7 @@ def lexer(program: list) -> list:
     tokens = []
     for i, line in enumerate(program):
         tokens.append(lex(line, i))
-    tokens.append([_tokenize("EOF", TOKEN_TYPES["EOF"], -1)])
+    tokens.append([Token("EOF", TOKEN_TYPES["EOF"], -1)])
     return list(chain.from_iterable(tokens))
 
 
@@ -74,32 +75,24 @@ def tokenize(lexeme: str, line: int) -> dict:
     """
     if lexeme:
         if is_reserved(lexeme):
-            return _tokenize(lexeme, TOKEN_TYPES['reserved'], line)
+            return Reserved(lexeme, lexeme=lexeme, ttype=TOKEN_TYPES['reserved'], line=line)
         if lexeme.isdigit():
-            return _tokenize(int(lexeme), TOKEN_TYPES['intnum'], line)
+            return Number(int(lexeme), lexeme=lexeme, ttype=TOKEN_TYPES['intnum'], line=line)
         if ID_REGEX.match(lexeme) and not is_reserved(lexeme):
-            return _tokenize(lexeme, TOKEN_TYPES['id'], line)
-        return _tokenize(lexeme, TOKEN_TYPES[lexeme], line)
+            return Id(lexeme, lexeme=lexeme, ttype=TOKEN_TYPES['id'], line=line)
+        if lexeme in DELIMITERS:
+            return Delimiter(lexeme, lexeme=lexeme, ttype=TOKEN_TYPES[lexeme], line=line)
+        if lexeme in OPERATORS:
+            return Operator(lexeme, lexeme=lexeme, ttype=TOKEN_TYPES[lexeme], line=line)
+        return Token(lexeme, TOKEN_TYPES[lexeme], line)
     return {}
-
-
-def _tokenize(lexeme: str, ttype: str, line: int) -> dict:
-    """
-    Return token dictionary
-    """
-    return {
-        'type': ttype,
-        'lexeme': str(lexeme),
-        'literal': lexeme,
-        'line': line
-    }
 
 
 def is_reserved(token: str) -> bool:
     """
-    Is token a reserved word (upper or lower, zero tolerance)
+    Is token a reserved word
     """
-    if token.strip().lower() in RESERVED_WORDS:
+    if token.lower() in RESERVED_WORDS:
         return True
     return False
 
@@ -164,7 +157,7 @@ def main(filename: str) -> int:
     tokens = lexer(program)
     if tokens:
         for i, token in enumerate(tokens):
-            print(f"Line {i}: {token}")
+            print(f"{i}: {token}")
     return 0
 
 

@@ -60,3 +60,25 @@ def illegal_chars(stmt: str) -> tuple:
     Return illegal chars in a stmt
     """
     return set(filter(lambda char: not char_legal(char), stmt))
+
+
+def first(lst: list) -> list:
+    if len(lst) < 2:
+        return lst
+    return lst[0]
+
+
+def rest(lst: list) -> list:
+    if len(lst) < 2:
+        return []
+    return lst[1:]
+
+
+def take(lst: list, n=1) -> list:
+    if n < 1:
+        return []
+    if len(lst) < 2:
+        return lst
+    if n > len(lst):
+        return lst
+    return lst[:n]
