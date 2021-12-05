@@ -35,7 +35,7 @@ TOKEN_TYPES = {
 
 def lexer(program: list) -> list:
     """
-    Return a stream of tokens
+    Return a stream of tokens for a program
     """
     tokens = []
     for i, line in enumerate(program):
@@ -46,7 +46,7 @@ def lexer(program: list) -> list:
 
 def lex(line: str, line_number: int) -> dict:
     """
-    Get tokens from a line
+    Return a stream of tokens from a line
     """
     tokens = []
     token = []
@@ -115,19 +115,38 @@ def get_indices(item, seq, idxs=[]) -> list:
     return idxs
 
 
-def illegal_chars_in_program(program: list) -> list:
+def lexical_errors(stmt: str) -> list:
     """
-    Report syntax errors at line and position
+    Get lexical errors in a statement
     """
     errors = []
-    for i, line in enumerate(program):
-        if c.string_legal(line):
-            continue
-        illegal_chars = c.illegal_chars_in_string(line)
-        for ic in illegal_chars:
-            for idx in get_indices(ic, line):
-                errors.append(f"Line {i}: illegal char '{ic}' at index {idx}")
+    illegal_chars = c.illegal_chars_in_stmt(stmt)
+    for char in illegal_chars:
+        for index in get_indices(char, stmt):
+            errors.append(f"Illegal character '{char}' at index '{index}'")
     return errors
+
+
+def program_lexical_errors(program: list) -> list:
+    """
+    Get syntax errors at line and position
+    """
+    errors = {}
+    for i, line in enumerate(program):
+        if c.stmt_legal(line):
+            continue
+        errors[i] = lexical_errors(line)
+    return errors
+
+
+def report_lexical_errors(errors: dict) -> int:
+    """
+    Displays lexical errors and returns the count
+    """
+    print("Lexical Errors:\n---------------")
+    for line, error in sorted(errors.items(), key=lambda k: errors.keys()):
+        print(f"Line {line}: {error}")
+    return len(errors)
 
 
 def main(filename: str) -> int:
@@ -136,12 +155,9 @@ def main(filename: str) -> int:
     Prints a stream of tokens and returns an error code to the terminal
     """
     program = c.load_program(filename)
-    errors = illegal_chars_in_program(program)
+    errors = program_lexical_errors(program)
     if errors:
-        print("Syntax error: Illegal characters in program\n-------------")
-        for error in errors:
-            print(f"{error}\n---")
-        return len(errors)
+        return report_lexical_errors(errors)
 
     tokens = lexer(program)
     if tokens:
