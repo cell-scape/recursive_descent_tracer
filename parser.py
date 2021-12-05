@@ -8,9 +8,6 @@ import common as c
 import lexer as lx
 
 
-NODE = t.Dict
-
-
 def parse(tokens: tuple):
     """
     Parse the token stream

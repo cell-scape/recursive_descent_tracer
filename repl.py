@@ -15,36 +15,35 @@ def evaluate(ir, state={}):
     pass
 
 
-def read(stmt: str, n=0) -> list:
+def read(program: list, n=0):
     """
-    Lex and parse a statement into IR for evaluation
+    Lex and parse statements into AST for evaluation
     """
-    if not c.stmt_legal(stmt):
-        _ = l.report_lexical_errors(l.lexical_errors(stmt))
-        return []
+    for stmt in program:
+        if not c.stmt_legal(stmt):
+            errors = l.lexical_errors(stmt)
+            raise Exception(errors)
     tokens =  l.lex(stmt, n)
 
 
 
-def repl(program=[]) -> tuple:
+def repl(program=[]) tuple:
     """
     Read-Eval-Print Loop for Tiny language
     """
     state = {}
     if program:
-        for line in program:
-            output, state = evaluate(read(program), state)
+        for stmt in program:
             try:
-                output.append((f"{evaluate(read(stmt))}"))
+                output, state = evaluate(read(program), state)
             except Exception as e:
-                output.append(f"{e}")
-                return "\n".join(output), 1
-        return "\n".join(output), 0
+                return e.args[0], 1
+        return output, 0
     
     pgm = "Tiny Lanugage Interpreter"
     print(f"{pgm}\n{'-'*len(pgm)}\n")
     
-    output = ""
+    output = None
     n = 0
     while True:
         try:
@@ -53,7 +52,6 @@ def repl(program=[]) -> tuple:
                 ir = read(stmt, n)                
                 output, state = evaluate(ir, state)
                 print(output)
-            break
         except Exception as e:
             return f"Exception: {e}", 1
     n += 1

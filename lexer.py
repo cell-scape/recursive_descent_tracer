@@ -42,7 +42,7 @@ def lexer(program: list) -> list:
     tokens = []
     for i, line in enumerate(program):
         tokens.append(lex(line, i))
-    tokens.append(_tokenize("EOF", TOKEN_TYPES["EOF"], -1, -1))
+    tokens.append([_tokenize("EOF", TOKEN_TYPES["EOF"], -1)])
     return list(chain.from_iterable(tokens))
 
 
@@ -52,7 +52,7 @@ def lex(line: str, line_number: int) -> dict:
     """
     tokens = []
     token = []
-    for char in enumerate(line):
+    for char in line:
         if not token and char in whitespace:
             continue
         if token and char in whitespace:
@@ -175,4 +175,3 @@ if __name__ == "__main__":
             sys.exit(-1)
         rc = main(f)
     sys.exit(rc)
-
