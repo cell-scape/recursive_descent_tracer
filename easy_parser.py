@@ -42,8 +42,8 @@ class Token:
             self.literal = str(self.lexeme)
         
     def __repr__(self):
-        return "".join([f"{self.line:^4} {self.pos:^4} {self.index:^4} - ",
-                f"{self.type:<12}: {self.lexeme:>8}"])
+        return "".join([f"| {self.line:^4} {self.pos:^4} {self.index:^4} |  ",
+                f"{self.type:<12} | {self.lexeme:^8}  |"])
 
 
 class Lexer:
@@ -52,9 +52,9 @@ class Lexer:
         self.tokens = []
         self.lex()
     
-    def __repr__(self):
-        header = f'{"Line":^4} {"Idx":^4} {"Seq":^4} - {"Token Type":^12} : {"Literal":>8}'
-        return "\n".join(["Lexer:", f"{'-'*6}\n", header, f"{'_'*len(header)}", str(self.tokens)])
+    def get_header(self):
+        header = f'  | {"Line":^4} {"Idx":^4} {"Seq":^4} |  {"Token Type":^12} | {"Literal":>8} |'
+        return "\n".join(["Lexer:", f"{'-'*6}\n", header, f"  {'_'*(len(header)-2)}"])
 
     def lex(self):
         program_tokens = []
