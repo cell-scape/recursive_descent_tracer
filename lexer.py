@@ -9,7 +9,7 @@ import sys
 import common as c
 
 
-ID_REGEX = re.compile(r"^[a-zA-Z]+[a-zA-Z0-9_]*$")
+ID_REGEX = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 OPERATORS = "+-*/="
 DELIMITERS = "();"
 
@@ -50,42 +50,38 @@ def lex(line: str, line_number: int) -> dict:
     """
     tokens = []
     token = []
-    start = 0
-    for i, char in enumerate(line):
+    for char in enumerate(line):
         if not token and char in whitespace:
             continue
         if token and char in whitespace:
-            tokens.append(tokenize("".join(token), 
-                                    line_number, start))
+            tokens.append(tokenize("".join(token), line_number))
             token = []
             continue
         if char in "".join(OPERATORS + DELIMITERS):
-            tokens.append(tokenize("".join(token),
-                                    line_number, start))
-            tokens.append(tokenize(char, line_number, i))
+            tokens.append(tokenize("".join(token), line_number))
+            tokens.append(tokenize(char, line_number))
             token = []
             continue
-        start = i
         token.append(char)
     return list(filter(lambda t: t, tokens))
 
 
-def tokenize(lexeme: str, line: int, pos: int) -> dict:
+def tokenize(lexeme: str, line: int) -> dict:
     """
     Return token objects for each lexeme
     """
     if lexeme:
         if is_reserved(lexeme):
-            return _tokenize(lexeme, TOKEN_TYPES['reserved'], line, pos)
+            return _tokenize(lexeme, TOKEN_TYPES['reserved'], line)
         if lexeme.isdigit():
-            return _tokenize(int(lexeme), TOKEN_TYPES['intnum'], line, pos)
+            return _tokenize(int(lexeme), TOKEN_TYPES['intnum'], line)
         if ID_REGEX.match(lexeme) and not is_reserved(lexeme):
-            return _tokenize(lexeme, TOKEN_TYPES['id'], line, pos)
-        return _tokenize(lexeme, TOKEN_TYPES[lexeme] line, pos)
+            return _tokenize(lexeme, TOKEN_TYPES['id'], line)
+        return _tokenize(lexeme, TOKEN_TYPES[lexeme], line)
     return {}
 
 
-def _tokenize(lexeme: str, ttype: str, line: int, pos: int) -> dict:
+def _tokenize(lexeme: str, ttype: str, line: int) -> dict:
     """
     Return token dictionary
     """
@@ -93,8 +89,7 @@ def _tokenize(lexeme: str, ttype: str, line: int, pos: int) -> dict:
         'type': ttype,
         'lexeme': str(lexeme),
         'literal': lexeme,
-        'line': line,
-        'position': pos
+        'line': line
     }
 
 

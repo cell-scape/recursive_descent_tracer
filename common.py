@@ -27,10 +27,10 @@ def file_exists(filename: str) -> bool:
 
 def load_program(filename: str) -> tuple:
     """
-    Read the program into a list of strings
+    Read the program into a list of all lowercase strings
     """
     with open(filename) as f:
-        return tuple(map(lambda line: line.strip(), f.readlines()))
+        return tuple(map(lambda line: line.lower().strip(), f.readlines()))
 
 
 def program_legal(program: tuple) -> bool:
