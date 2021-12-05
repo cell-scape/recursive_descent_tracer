@@ -30,8 +30,8 @@ TOKEN_TYPES = {
 
 
 class Token:
-    def __init__(self, token={'ttype': "", "lex": "", "loc": (-1, -1, -1)}):
-        self.type = token['ttype']
+    def __init__(self, token={'type': "", "lex": "", "loc": (-1, -1, -1)}):
+        self.type = token['type']
         self.lexeme = token['lex']
         self.line = token['loc'][0]
         self.pos= token['loc'][1]
@@ -42,17 +42,19 @@ class Token:
             self.literal = str(self.lexeme)
         
     def __repr__(self):
-        return "".join([f"({self.line}, {self.pos}, {self.index}) -",
-                f"{self.type} Token: {self.lexeme}"])
+        return "".join([f"{self.line:^4} {self.pos:^4} {self.index:^4} - ",
+                f"{self.type:<12}: {self.lexeme:>8}"])
 
 
 class Lexer:
     def __init__(self, program: list):
         self.program = program
+        self.tokens = []
         self.lex()
     
     def __repr__(self):
-        return f"Lexer: {self.program_tokens}"
+        header = f'{"Line":^4} {"Idx":^4} {"Seq":^4} - {"Token Type":^12} : {"Literal":>8}'
+        return "\n".join(["Lexer:", f"{'-'*6}\n", header, f"{'_'*len(header)}", str(self.tokens)])
 
     def lex(self):
         program_tokens = []
@@ -68,7 +70,7 @@ class Lexer:
             if stmt[-1] != ";" and not stmt[-1].endswith(";"):
                 print(f"Syntax error on line {i}: statement must end with semicolon")
             for j, lexeme in enumerate(stmt):
-                token = {"lexeme": lexeme}
+                token = {"lex": lexeme}
                 if lexeme == "print":
                     token["type"] = TOKEN_TYPES[lexeme]
                 elif ID.match(lexeme):
@@ -81,24 +83,20 @@ class Lexer:
                 tokens.append(Token(token))
                 k += 1
             program_tokens.append(tokens)
-        self.program_tokens = program_tokens
+        self.tokens = program_tokens
     
     def get_tokens(self, flatten=False):
-        if not self.program_tokens:
+        if not self.tokens:
             self.lex()
-        if flatten: 
-            if not self.flat_tokens:
-                self.flatten()
-            return self.flat_tokens
-        return self.program_tokens
+        if flatten:
+            self.flatten()
+        return self.tokens
 
     def flatten(self):
-        if not self.program_tokens:
+        if not self.tokens:
             self.lex()
-        self.flat_tokens = chain.from_iterable(self.program_tokens)
+        self.tokens = list(chain.from_iterable(self.tokens))
     
-
-
 
 class StmtList:
     def __init__(self, program_tokens: list):
