@@ -48,7 +48,6 @@ class Lexer:
     def __init__(self, program: list):
         self.program = program
         self.tokens = []
-        self.errors = []
         self.lex()
 
     def lex(self):
@@ -56,13 +55,13 @@ class Lexer:
         for i, stmt in enumerate(self.program):
             tokens = []
             if not ID.match(stmt[0]):
-                self.errors.append(f"Syntax error on line {i}: statement must begin with valid identifier or 'print'")
+                print(f"Syntax error on line {i}: statement must begin with valid identifier or 'print'")
             elif stmt[0] != PRINT and ID.match(stmt[0]) and stmt[1] != "=":
-                self.errors.append(f"Syntax error on line {i}: statement must begin with assigment '<ident> = '  or 'print'")
+                print(f"Syntax error on line{i}: statement must begin with assigment '<ident> = '  or 'print'")
             elif stmt[0] == PRINT and stmt[1] == "=":
-                self.errors.append(f"Syntax error on line {i}: 'print' is a reserved word and cannot be used for assignment")
+                print(f"Syntax error on line {i}: 'print' is a reserved word and cannot be used for assignment")
             if stmt[-1] != ";" and not stmt[-1].endswith(";"):
-                self.errors.append(f"Syntax error on line {i}: statement must end with semicolon")
+                print(f"Syntax error on line {i}: statement must end with semicolon")
             for lexeme in stmt:
                 token = {"lex": lexeme}
                 if lexeme == "print":
@@ -77,15 +76,16 @@ class Lexer:
             program_tokens.append(tokens)
         self.tokens = program_tokens
 
-    def get_errors(self):
-        return self.errors
-
-    def get_tokens(self, flatten=True):
+    def get_tokens(self, flatten=False):
+        if not self.tokens:
+            self.lex()
         if flatten:
             self.flatten()
         return self.tokens
 
     def flatten(self):
+        if not self.tokens:
+            self.lex()
         self.tokens = list(chain.from_iterable(self.tokens))
 
 
@@ -100,9 +100,9 @@ class Parser:
 
     def parse(self):
         if self.stmt_list():
-            self.errors.append("Error: stmt_list returned False for a statement")
+            self.errors.append("Syntax error: stmt_list incomplete")
         if self.cur_tok != len(self.tokens)-1:
-            self.errors.append(f"Syntax error - Token {self.cur_tok} of {len(self.tokens)}: {self.tokens[self.cur_tok]}")
+            self.errors.append(f"Syntax error: current token = {self.cur_tok}, total tokens = {len(self.tokens)}")
         return self.output, self.tracing, self.errors, self.state
 
     def peek(self):
@@ -119,17 +119,15 @@ class Parser:
         peek = self.peek()
         if peek and peek.type == next_tok:
             self.cur_tok += 1
-            self.tracing.append(f"Token {self.cur_tok:<4}\t|\tToken advanced by match()")
             return True
         return False
 
     def stmt_list(self):
-        if (len(self.tokens)-1) > self.cur_tok:
+        while (len(self.tokens)-1) > self.cur_tok:
             stmt_ret = self.stmt()
             if stmt_ret:
                 self.output.append(stmt_ret)
-                self.tracing.append(f"Token {self.cur_tok:<4}\t|\tstmt() return value: {stmt_ret}")
-                self.stmt_list()
+                continue
             return False
         return True
 
@@ -138,7 +136,7 @@ class Parser:
             expr = self.expr()
             if expr:
                 if self.match("SEMICOLON"):
-                    self.tracing.append(f"Token {self.cur_tok:<4}\t|\tPrint stmt() return: {expr}")
+                    self.tracing.append(f"Print stmt() return: {expr}")
                     return expr
                 return False
             return False
@@ -149,7 +147,7 @@ class Parser:
                 if value:
                     if self.match("SEMICOLON"):
                         self.state[var.literal] = value
-                        self.tracing.append(f"Token {self.cur_tok:<4}\t|\tAssign stmt() return: {value}")
+                        self.tracing.append(f"Assign stmt() return: {value}")
                         return value
                     return False
                 return False
@@ -163,16 +161,16 @@ class Parser:
             if expr_ret and isinstance(expr_ret, tuple):
                 if expr_ret[0] == "PLUS":
                     value = term_ret + expr_ret[1]
-                    self.tracing.append(f"Token {self.cur_tok:<4}\t|\tPLUS expr() return value: {value}")
+                    self.tracing.append(f"PLUS expr() return value: {value}")
                     return value
                 elif expr_ret[0] == "MINUS":
                     value = term_ret - expr_ret[1]
-                    self.tracing.append(f"Token {self.cur_tok:<4}\t|\tMINUS expr() return value: {value}")
+                    self.tracing.append(f"MINUS expr() return value: {value}")
                     return value
                 else:
                     return False
                 return False
-            self.tracing.append(f"Token {self.cur_tok:<4}\t|\texpr() return value: {term_ret}")
+            self.tracing.append(f"expr() return value: {term_ret}")
             return term_ret
         return False
 
@@ -183,7 +181,7 @@ class Parser:
             if term_ret:
                 expr_ret = self.expr_pr()
                 if expr_ret:
-                    self.tracing.append(f"Token {self.cur_tok:<4}\t|\texpr_pr() return value: {op}, {term_ret}")
+                    self.tracing.append(f"expr_pr() return value: {op}, {term_ret}")
                     return op, term_ret
                 return False
             return False
@@ -196,16 +194,16 @@ class Parser:
             if term_ret and isinstance(term_ret, tuple):
                 if term_ret[0] == "MULTIPLY":
                     value =  factor_ret * term_ret[1]
-                    self.tracing.append(f"Token {self.cur_tok:<4}\t|\tMULTIPLY term() return value: {value}")
+                    self.tracing.append(f"MULTIPLY term() return value: {value}")
                     return value
                 elif term_ret[0] == "DIVIDE":
                     value = factor_ret // term_ret[1]
-                    self.tracing.append(f"Token {self.cur_tok:<4}\t|\tDIVIDE term() return value: {value}")
+                    self.tracing.append(f"DIVIDE term() return value: {value}")
                     return value
                 else:
                     return False
                 return False
-            self.tracing.append(f"Token {self.cur_tok:<4}\t|\tterm() return value: {factor_ret}")
+            self.tracing.append(f"term() return value: {factor_ret}")
             return factor_ret
         return False
 
@@ -216,7 +214,7 @@ class Parser:
             if factor_ret:
                 term_ret = self.term_pr()
                 if term_ret:
-                    self.tracing.append(f"Token {self.cur_tok:<4}\t|\tterm_pr() return value: {op}, {factor_ret}")
+                    self.tracing.append(f"term_pr() return value: {op}, {factor_ret}")
                     return op, factor_ret
                 return False
             return False
@@ -227,17 +225,17 @@ class Parser:
             expr_ret = self.expr()
             if expr_ret:
                 if self.match("RPAREN"):
-                    self.tracing.append(f"Token {self.cur_tok:<4}\t|\tPAREN factor() return value: {expr_ret}")
+                    self.tracing.append(f"PAREN factor() return value: {expr_ret}")
                     return expr_ret
                 return False
             return False
         elif self.match("NUMBER"):
             value = self.num()
-            self.tracing.append(f"Token {self.cur_tok:<4}\t|\tNUMBER factor() return value: {value}")
+            self.tracing.append(f"NUMBER factor() return value: {value}")
             return value
         elif self.match("ID"):
             value = self.id()
-            self.tracing.append(f"Token {self.cur_tok:<4}\t|\tID factor() return value: {value}")
+            self.tracing.append("ID factor() return value: {value}")
             return value
         return False
 
@@ -248,94 +246,43 @@ class Parser:
         return self.state[self.tokens[self.cur_tok].literal]
 
 
-def repl(verbose=False, tracing=False):
-    print("Welcome to Tiny Language REPL ('quit' or 'exit', to exit)")
-    print("---------------------------------------------------------")
-    if verbose:
-        print("verbose mode enabled")
-    if tracing:
-        print("tracing enabled")
-    print("Toggle verbose or detailed tracing with 'verbose' and 'tracing' options")
-    print("Valid statements are assignments or print statements")
-    print("Example assignment:  id = 1 + 3 * 4 ;")
-    print("Example print:       print = 1 + 3 * 4 ;")
-    print("---")
+def repl(tracing=False):
+    print("Welcome to Tiny Language REPL")
+    print("-----------------------------")
     state = {}
-    verbose = verbose
-    tracing = tracing
     while True:
         userin = input(">>> ")
-
-        if userin.lower() in ("exit", "quit", "stop", "break"):
-            print("Goodbye!")
-            return 0
-        if userin.lower() in ("verbose", "v"):
-            if verbose:
-                verbose = False
-                print("verbose mode disabled")
-            else:
-                verbose = True
-                print("verbose mode enabled")
-            continue
-        if userin.lower() in ("tracing", "trace"):
-            if tracing:
-                tracing = False
-                print("tracing disabled")
-            else:
-                tracing = True
-                print("tracing enabled")
-            continue
+        if userin == "exit":
+            break
         if not legal_chars(userin):
             print(f"You can only use chars in {ALPHABET}")
             continue
-
         stmt = userin.strip().split()
-        if stmt:
-            if not ID.match(stmt[0]):
-                print(f"Invalid input {userin}: statements start with an identifier or 'print'")
-                continue
-            if not stmt[-1] == ";":
-                print(f"Invalid input {userin}: statements end with a space separated semicolon ';'")
-                continue
-        else:
-            continue
-
         lex = Lexer([stmt])
-        tokens = lex.get_tokens()   
-        if lex.errors:
-            print(f"Tokens: {tokens}\n")
-            _ = report_output(lex.errors, "Lexer Errors")
-            continue
-
-        if verbose or tracing:
-            print(f"Tokens: {tokens}\n")
-
+        tokens = lex.get_tokens(flatten=True)
+        print(f"{tokens}")
         p = Parser(tokens)
         p.parse()
-        if verbose or tracing:
-            if p.output:
-                _ = report_output(p.output, "Output")
-            if p.errors:
-                _ = report_output(p.errors, "Errors")
-            if p.state:
-                state.update(p.state)
-                print(f"Variables bound in parser: {state}")
-        else:
-            if p.output:
-                print(p.output[0])
-            continue
+        if p.output:
+            report_output(p.output, "Output")
+        if p.errors:
+            report_output(p.errors, "Errors")
+        if p.state:
+            state.update(p.state)
+            print(f"Variables bound in parser: {state}")
         if tracing:
-            _ = report_output(p.tracing, "Tracing")
+            report_output(p.tracing, "Tracing")
         continue
+    return 0
 
 
 def report_output(output, title: str) -> int:
     """
     Formats parser output
     """
-    print(f"{title}\n---\n")
+    print(f"{title} output\n---\n")
     for i, message in enumerate(output):
-        print(f"{i:<4} :  {message}")
+        print(f"{i}: {message}")
     print("\n---\n")
     return len(output)
 
@@ -366,7 +313,7 @@ def legal_chars(stmt: str) -> bool:
 
 
 def argparser(desc="Top Down Recursive Descent Parser"):
-    ap = argparse.ArgumentParser(prog="parser.py", description=desc, epilog="---")
+    ap = argparse.ArgumentParser(prog="parser", description=desc, epilog="---")
     ap.add_argument("-i", "--interactive",
                     action="store_true",
                     dest="repl",
@@ -377,11 +324,6 @@ def argparser(desc="Top Down Recursive Descent Parser"):
                     dest="tracing",
                     required=False,
                     help="Adds extra output detail")
-    ap.add_argument("-v", "--verbose",
-                    action="store_true",
-                    dest="verbose",
-                    required=False,
-                    help="Adds verbose reporting to REPL")
     ap.add_argument("-f", "--files",
                     type=str,
                     dest="files",
@@ -399,27 +341,25 @@ def main(filename: str, tracing=False):
     """
     program = load_program(filename)
     lexer = Lexer(program)
-    if lexer.errors:
-        _ = report_output(lexer.errors, "Lexer Errors")
-    tokens = lexer.get_tokens()
+    tokens = lexer.get_tokens(flatten=True)
     p = Parser(tokens)
     _ = p.parse()
     rc = 0
     if p.output:
-        _ = report_output(p.output, "Parser Output")
+        _ = report_output(p.output, "Output")
     if p.errors:
         rc = report_output(p.errors, "Parser Errors")
     if p.state:
         print(f"Variable State:\n---\n\nvariables bound in parser: {p.state}\n")
     if tracing and p.tracing:
-        _ = report_output(p.tracing, "Tracing Output")
+        _ = report_output(p.tracing, "Tracing")
     return rc
 
 
 if __name__ == "__main__":
     args = argparser().parse_args()
     if args.repl:
-        sys.exit(repl(verbose=args.verbose, tracing=args.tracing))
+        sys.exit(repl(tracing=args.tracing))
 
     for f in args.files:
         if not file_exists(f):

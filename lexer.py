@@ -7,14 +7,17 @@ from string import whitespace
 import sys
 
 import common as c
+from tokens import *
 
 
-ID_REGEX = re.compile(r"^[a-zA-Z]+[a-zA-Z0-9_]*$")
+ID_REGEX = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 OPERATORS = "+-*/="
 DELIMITERS = "();"
 
 RESERVED_WORDS = {
     "print",
+    "exit",
+    "quit"
 }
 
 TOKEN_TYPES = {
@@ -29,22 +32,24 @@ TOKEN_TYPES = {
     ")": "RPAREN",
     "=": "ASSIGN",
     ";": "SEMICOLON",
+    "EOF": "EOF",
 }
 
 
-def lexer(program: tuple) -> tuple:
+def lexer(program: list) -> list:
     """
-    Return a stream of tokens
+    Return a stream of tokens for a program
     """
-    token_stream = []
-    for line in program:
-        token_stream.append(lex(line))
-    return tuple(chain.from_iterable(token_stream))
+    tokens = []
+    for i, line in enumerate(program):
+        tokens.append(lex(line, i))
+    tokens.append([Token("EOF", TOKEN_TYPES["EOF"], -1)])
+    return list(chain.from_iterable(tokens))
 
 
-def lex(line: str) -> dict:
+def lex(line: str, line_number: int) -> dict:
     """
-    Get from a line
+    Return a stream of tokens from a line
     """
     tokens = []
     token = []
@@ -52,38 +57,42 @@ def lex(line: str) -> dict:
         if not token and char in whitespace:
             continue
         if token and char in whitespace:
-            tokens.append(tokenize("".join(token)))
+            tokens.append(tokenize("".join(token), line_number))
             token = []
             continue
         if char in "".join(OPERATORS + DELIMITERS):
-            tokens.append(tokenize("".join(token)))
-            tokens.append(tokenize(char))
+            tokens.append(tokenize("".join(token), line_number))
+            tokens.append(tokenize(char, line_number))
             token = []
             continue
         token.append(char)
     return list(filter(lambda t: t, tokens))
 
 
-def tokenize(token: str) -> dict:
+def tokenize(lexeme: str, line: int) -> dict:
     """
-    Return token objects for each token
+    Return token objects for each lexeme
     """
-    if token:
-        if is_reserved(token):
-            return {TOKEN_TYPES['reserved']: token}
-        if token.isdigit():
-            return {TOKEN_TYPES['intnum']: int(token)}
-        if ID_REGEX.match(token) and not is_reserved(token):
-            return {TOKEN_TYPES['id']: token}
-        return {TOKEN_TYPES[token]: token}
-    return None
+    if lexeme:
+        if is_reserved(lexeme):
+            return Reserved(lexeme, lexeme=lexeme, ttype=TOKEN_TYPES['reserved'], line=line)
+        if lexeme.isdigit():
+            return Number(int(lexeme), lexeme=lexeme, ttype=TOKEN_TYPES['intnum'], line=line)
+        if ID_REGEX.match(lexeme) and not is_reserved(lexeme):
+            return Id(lexeme, lexeme=lexeme, ttype=TOKEN_TYPES['id'], line=line)
+        if lexeme in DELIMITERS:
+            return Delimiter(lexeme, lexeme=lexeme, ttype=TOKEN_TYPES[lexeme], line=line)
+        if lexeme in OPERATORS:
+            return Operator(lexeme, lexeme=lexeme, ttype=TOKEN_TYPES[lexeme], line=line)
+        return Token(lexeme, TOKEN_TYPES[lexeme], line)
+    return {}
 
 
 def is_reserved(token: str) -> bool:
     """
-    Is token a reserved word (upper or lower, zero tolerance)
+    Is token a reserved word
     """
-    if token.strip().lower() in RESERVED_WORDS:
+    if token.lower() in RESERVED_WORDS:
         return True
     return False
 
@@ -101,19 +110,38 @@ def get_indices(item, seq, idxs=[]) -> list:
     return idxs
 
 
-def illegal_chars_in_program(program: tuple) -> tuple:
+def lexical_errors(stmt: str) -> list:
     """
-    Report syntax errors at line and position
+    Get lexical errors in a statement
     """
     errors = []
-    for i, line in enumerate(program):
-        if c.string_legal(line):
-            continue
-        illegal_chars = c.illegal_chars_in_string(line)
-        for ic in illegal_chars:
-            for idx in get_indices(ic, line):
-                errors.append(f"Line {i}: illegal char '{ic}' at index {idx}")
+    illegal_chars = c.illegal_chars_in_stmt(stmt)
+    for char in illegal_chars:
+        for index in get_indices(char, stmt):
+            errors.append(f"Illegal character '{char}' at index '{index}'")
     return errors
+
+
+def program_lexical_errors(program: list) -> list:
+    """
+    Get syntax errors at line and position
+    """
+    errors = {}
+    for i, line in enumerate(program):
+        if c.stmt_legal(line):
+            continue
+        errors[i] = lexical_errors(line)
+    return errors
+
+
+def report_lexical_errors(errors: dict) -> int:
+    """
+    Displays lexical errors and returns the count
+    """
+    print("Lexical Errors:\n---------------")
+    for line, error in sorted(errors.items(), key=lambda k: errors.keys()):
+        print(f"Line {line}: {error}")
+    return len(errors)
 
 
 def main(filename: str) -> int:
@@ -122,22 +150,21 @@ def main(filename: str) -> int:
     Prints a stream of tokens and returns an error code to the terminal
     """
     program = c.load_program(filename)
-    errors = illegal_chars_in_program(program)
+    errors = program_lexical_errors(program)
     if errors:
-        print("Syntax error: Illegal characters in program\n-------------")
-        for error in errors:
-            print(f"{error}\n---")
-        return len(errors)
+        return report_lexical_errors(errors)
 
     tokens = lexer(program)
     if tokens:
         for i, token in enumerate(tokens):
-            print(f"Line {i}: {token}")
+            print(f"{i}: {token}")
     return 0
 
 
 if __name__ == "__main__":
     args = c.argparser("Tiny Language Lexer").parse_args()
-    if c.file_exists(args.filename):
-        sys.exit(main(args.filename))
-    sys.exit(-1)
+    for f in args.files:
+        if not c.file_exists(f):
+            sys.exit(-1)
+        rc = main(f)
+    sys.exit(rc)
