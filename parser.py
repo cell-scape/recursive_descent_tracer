@@ -4,7 +4,6 @@
 import argparse
 from itertools import chain
 from pathlib import Path
-import pdb
 import re
 from string import whitespace, ascii_letters, digits
 import sys
@@ -249,7 +248,7 @@ class Parser:
 
 
 def repl(verbose=False, tracing=False):
-    print("Welcome to Tiny Language REPL ('quit' or 'exit', to exit)")
+    print("Welcome to Recursive Descent REPL ('quit' or 'exit', to exit)")
     print("---------------------------------------------------------")
     if verbose:
         print("verbose mode enabled")
@@ -258,7 +257,7 @@ def repl(verbose=False, tracing=False):
     print("Toggle verbose or detailed tracing with 'verbose' and 'tracing' options")
     print("Valid statements are assignments or print statements")
     print("Example assignment:  id = 1 + 3 * 4 ;")
-    print("Example print:       print = 1 + 3 * 4 ;")
+    print("Example print:       print 1 + 3 * 4 ;")
     print("---")
     state = {}
     verbose = verbose
